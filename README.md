@@ -1,4 +1,7 @@
 # vt100-iface
+
+[![Build Status](https://travis-ci.org/rafagafe/vt100-iface.svg?branch=master)](https://travis-ci.org/rafagafe/vt100-iface)
+
 It is a C library to read text lines from a VT100 terminal.
 
 You can edit the command line navigate it with the cursor using:
