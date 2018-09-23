@@ -33,14 +33,16 @@ extern "C" {
   * It prints a character to a terminal.
   * @param c Character to be sent.
   * @param p A valid instance of a terminal.
-  * @return  This value will not checked. */
+  * @return  On success, a non-negative value is returned.
+  *          On error, -1 is returned  */
 int tputc( int c, void* p );
 
 /** Callback function. It has to be defined by the user.
   * It prints a null-terminated string to a terminal.
   * @param c Character to be sent.
   * @param p A valid instance of a terminal.
-  * @return  This value will not checked. */
+  * @return  On success, a non-negative value is returned.
+  *          On error, -1 is returned  */
 int tputs( char const* str, void* p );
 
 /** Set of hints for a line capture. */
