@@ -58,8 +58,8 @@ static void client( void* p ) {
         linelen  =  80,
         numlines = 200
     };
-    static char lines[ numlines ][ linelen ];
-    static struct historycfg const cfg = {
+    char lines[ numlines ][ linelen ];
+    struct historycfg const cfg = {
         .lines    = lines,
         .linelen  = linelen,
         .numlines = numlines
