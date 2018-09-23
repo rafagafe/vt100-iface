@@ -111,15 +111,17 @@ int tgetc( void* p ) {
 
 // ----------------------------------------------------- Helper functions: ---
 
-void pstream( struct stream const* stream ) {
-    printf( "\n%s", "Input: " );
+static void presult( struct stream const* stream, char const* line ) {
+    printf( "\n%s", " -Input: " );
     printstr( stream->input );
-    printf( "\n%s", "Output: " );
+    printf( "\n%s", " -Output: " );
     printstr( stream->output );
+    printf( "\n%s", " -Result: " );
+    printstr( line );
     printf( "\n" );
 }
 
-static int processline( char const* input, char* line, int sizeline ) {
+static int processline( char const* input, char* line, int sizeline, struct hints const* hints ) {
     struct stream stream;
     memset( &stream, 0, sizeof stream );
     stream.input = input;
@@ -128,16 +130,20 @@ static int processline( char const* input, char* line, int sizeline ) {
         .line  = line,
         .max   = sizeline,
         .hist  = NULL,
-        .hints = NULL,
+        .hints = hints,
     };
-    return vt100_getline( &vt100 );
+    int const verbose = 1;
+    int const len = vt100_getline(&vt100);
+    if( verbose )
+        presult( &stream, line );
+    return len;
 }
 
 #define HOME      "\033[1~" // Home key
 #define END       "\033[4~" // End key
 #define DEL       "\033[3~" // Delete hey
 #define BS        "\177"    // Backspace key
-
+#define TAB       "\011"    // Tab
 
 // ----------------------------------------------------------- Unit tests: ---
 
@@ -145,7 +151,7 @@ static int basicInput( void ) {
     static char const input[] = "One Two Three\r\n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -155,7 +161,7 @@ static int arrows( void ) {
     static char const input[] = "One Three\033[100D\033[50C\033[6D\033[CTwo \n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -165,7 +171,7 @@ static int arrows2( void ) {
     static char const input[] = "One Three\033OD\033OD\033OCTwo \n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -175,7 +181,7 @@ static int backSpaceEnd( void ) {
     static char const input[] = "One Four" BS BS BS BS "Two Three\n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -185,7 +191,7 @@ static int backSpaceMiddle( void ) {
     static char const input[] = "One Two Four Three\033OD" BS BS BS BS BS "\n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -195,7 +201,7 @@ static int shiftBackSpaceEnd( void ) {
     static char const input[] = "One Four\010Two Three\n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -205,7 +211,7 @@ static int shiftBackSpaceMiddle( void ) {
     static char const input[] = "One Four Two Three\033[12D\010\n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -215,7 +221,7 @@ static int delete( void ) {
     static char const input[] = "One Four Three\033[10D" DEL DEL DEL DEL "Two\n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -225,7 +231,7 @@ static int home( void ) {
     static char const input[]    = "Two Three" HOME "One \n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
@@ -235,10 +241,27 @@ static int end( void ) {
     static char const input[]    = "Two" HOME "One " END " Three\n";
     static char const expected[] = "One Two Three";
     char line[ 128 ];
-    int const len = processline( input, line, sizeof line );
+    int const len = processline( input, line, sizeof line, NULL );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
     done();
+}
+
+static int hint( void ) {
+    static char const* const words [] = {
+        "one", "two", "three", "four", "five", "six", "seven"
+    };
+    static struct hints const hints = {
+        .str = words,
+        .qty = sizeof words / sizeof *words
+    };
+    static char const input[] = "t" TAB TAB "\n";
+    static char const expected[] = "three";
+    char line[ 128 ];
+    int const len = processline( input, line, sizeof line, &hints );
+    check( len == sizeof expected - 1 );
+    check( 0 == strcmp( line, expected ) );
+    done();    
 }
 
 // --------------------------------------------------------- Execute tests: ---
@@ -255,6 +278,7 @@ int main( void ) {
         { delete,               "Delete key"               },
         { home,                 "Home key"                 },
         { end,                  "End key"                  },
+        { hint,                 "Hints"                    }
     };
     return test_suit( tests, sizeof tests / sizeof *tests );
 }
