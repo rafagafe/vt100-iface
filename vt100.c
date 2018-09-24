@@ -77,7 +77,7 @@ static int prevhint( struct hints const* hints, char const* str, int len, int h 
     for( int i = h - 1; i >= 0; --i )
         if ( 0 == memcmp( str, hints->str[i], len ) )
             return i;
-    for( int i = hints->qty; i > h; --i )
+    for( int i = hints->qty - 1; i > h; --i )
         if ( 0 == memcmp( str, hints->str[i], len ) )
             return i;
     return -1;
@@ -277,10 +277,9 @@ static void hint( struct vt100state* st, int forward ) {
 }
 
 /** Process a VT100 command: <ESC>[num~
-  * @param st State of line capture.
-  * @param a PArameter of VT100 command. */
-static void cursorctrl( struct vt100state* st, int a ) {
-    switch( a ) {
+  * @param st State of line capture. */
+static void cursorctrl( struct vt100state* st ) {
+    switch( st->param ) {
         case 1: home( st );   break; // Home key
         case 3: delete( st ); break; // Delete key
         case 4: end( st );    break; // End key
@@ -293,9 +292,9 @@ static void cursorctrl( struct vt100state* st, int a ) {
   * @param st State of line capture.
   * @param c Character ID of VT100 command.
   * @param a Parameter of VT100 command. */
-static void escapeSquareBracket( struct vt100state* st, int c, int a ) {
+static void escapeSquareBracket( struct vt100state* st, int c ) {
     switch( c ) {
-        case '~': cursorctrl( st, a );  break;
+        case '~': cursorctrl( st );     break;
         case 'A': preventry( st );      break; // Arrow Up
         case 'B': nextentry( st );      break; // Arrow Down
         case 'C': cursorforward( st );  break; // Arrow Right
@@ -393,7 +392,7 @@ int vt100_char( struct vt100state* st, int c ) {
                 break;
             }
             if( !isdigit( c ) ) {
-                escapeSquareBracket( st, c, st->param );
+                escapeSquareBracket( st, c );
                 st->state = CHAR;
                 break;
             }
