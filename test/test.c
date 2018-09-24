@@ -132,7 +132,7 @@ static int processline( char const* input, char* line, int sizeline, struct hint
         .hist  = NULL,
         .hints = hints,
     };
-    int const verbose = 1;
+    int const verbose = 0;
     int const len = vt100_getline(&vt100);
     if( verbose )
         presult( &stream, line );
@@ -143,7 +143,8 @@ static int processline( char const* input, char* line, int sizeline, struct hint
 #define END       "\033[4~" // End key
 #define DEL       "\033[3~" // Delete hey
 #define BS        "\177"    // Backspace key
-#define TAB       "\011"    // Tab
+#define TAB       "\011"    // Tab key
+#define SHIFT_TAB "\033[Z"  // Shift + Tab keys
 
 // ----------------------------------------------------------- Unit tests: ---
 
@@ -247,7 +248,7 @@ static int end( void ) {
     done();
 }
 
-static int hint( void ) {
+static int hintForward( void ) {
     static char const* const words [] = {
         "one", "two", "three", "four", "five", "six", "seven"
     };
@@ -261,9 +262,26 @@ static int hint( void ) {
     int const len = processline( input, line, sizeof line, &hints );
     check( len == sizeof expected - 1 );
     check( 0 == strcmp( line, expected ) );
-    done();    
+    done();
 }
 
+static int hintBackward( void ) {
+    static char const* const words [] = {
+        "one", "two", "three", "four", "five", "six", "ten"
+    };
+    static struct hints const hints = {
+        .str = words,
+        .qty = sizeof words / sizeof *words
+    };
+    static char const input[] = "t" TAB TAB TAB SHIFT_TAB "\n";
+    static char const expected[] = "three";
+    char line[ 128 ];
+    memset( line, 0, sizeof line );
+    int const len = processline( input, line, sizeof line, &hints );
+    check( len == sizeof expected - 1 );
+    check( 0 == strcmp( line, expected ) );
+    done();
+}
 // --------------------------------------------------------- Execute tests: ---
 
 int main( void ) {
@@ -278,7 +296,8 @@ int main( void ) {
         { delete,               "Delete key"               },
         { home,                 "Home key"                 },
         { end,                  "End key"                  },
-        { hint,                 "Hints"                    }
+        { hintForward,          "Hint forward"             },
+        { hintBackward,         "Hint backward"            }
     };
     return test_suit( tests, sizeof tests / sizeof *tests );
 }
