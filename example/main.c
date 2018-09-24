@@ -46,8 +46,16 @@ static void client( void* p ) {
         "help"    ,
         "history" ,
         "exit"    ,
+        "hints"   ,
+        "request" ,
+        "make"    ,
+        "release" ,
+        "main"    ,
+        "range"   ,
+        "measure" ,
+        "rate"    ,
+        "meeting"
     };
-
     static struct hints const hints = {
         .str  = names,
         .qty  = sizeof names / sizeof *names
@@ -67,6 +75,7 @@ static void client( void* p ) {
     struct history his;
     history_init( &his, &cfg );
 
+    /* Configure VT100: */
     char buff[ linelen ];
     struct vt100 const vt100 = {
         .p     = p,
@@ -76,6 +85,7 @@ static void client( void* p ) {
         .hints = &hints,
     };
 
+    /* Clear screen: */
     tputs( "\ec\e[2J", p );
 
     for(;;) {
@@ -103,6 +113,10 @@ static void client( void* p ) {
 
         else if ( 0 == strcmp( "history", vt100.line ) )
             history_init( &his, &cfg );
+
+        else if( 0 == strcmp( "hints", vt100.line ) )
+            for( int i = 0; i < hints.qty; ++i )
+                tputs( hints.str[i], p ), tputs( "\r\n", p );
     }
 }
 
