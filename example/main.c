@@ -66,14 +66,13 @@ static void client( void* p ) {
         linelen  =  80,
         numlines = 200
     };
-    char lines[ numlines ][ linelen ];
-    struct historycfg const cfg = {
-        .lines    = lines,
+    struct historycfg const histcfg = {
+        .lines    = malloc( numlines * linelen ),
         .linelen  = linelen,
         .numlines = numlines
     };
-    struct history his;
-    history_init( &his, &cfg );
+    struct history hist;
+    history_init( &hist, &histcfg );
 
     /* Configure VT100: */
     char buff[ linelen ];
@@ -81,7 +80,7 @@ static void client( void* p ) {
         .p     = p,
         .max   = sizeof buff,
         .line  = buff,
-        .hist   = &his,
+        .hist  = &hist,
         .hints = &hints,
     };
 
@@ -112,12 +111,15 @@ static void client( void* p ) {
                 tputs( hints.str[i], p ), tputs( "\r\n", p );
 
         else if ( 0 == strcmp( "history", vt100.line ) )
-            history_init( &his, &cfg );
+            history_init( &hist, &histcfg );
 
         else if( 0 == strcmp( "hints", vt100.line ) )
             for( int i = 0; i < hints.qty; ++i )
                 tputs( hints.str[i], p ), tputs( "\r\n", p );
+
     }
+
+    free( histcfg.lines );
 }
 
 int main( void ) {
