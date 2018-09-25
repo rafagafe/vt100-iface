@@ -20,33 +20,24 @@
   SOFTWARE.
 */
 
-#ifndef SERVER_H
-#define	SERVER_H
+#ifndef CLARG_H
+#define	CLARG_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-/*
- * This module implements the functions tgetc(), tputc() and tputs()
- * that are needed for vt100.
- */
-
-/** Create a TCP server at port 2277.
-  * For client create a thread.
-  * @param client Callback function for each client.
-  *               The parameter passed has to be used with tgetc(), tputc() and tputs().
-  *               With this functions data can be transfered using the socket.
-  * @return  On success, zero.
-  *          On error, non-zero*/
-int server( void(*client)(void*) );
-
-/** Get the client ID. */
-int clientid( void* p );
+/** Parse Command Line ARGuments
+  * @param argv Destination array of pointer to arguments.
+  * @param max  Capacity of argv.
+  * @param line Null-terminated string with the command line input.
+  * @return On success, number of arguments found.
+            On error, negative value. */
+int clarg( char** argv, int max, char* line );
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* SERVER_H */
+#endif	/* CLARG_H */
 

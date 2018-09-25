@@ -27,15 +27,64 @@
 #include <stdlib.h>
 #include <time.h>
 #include "../vt100-tgetc.h"
+#include "../clarg.h"
 
-void prompt( void* p ) {
-    tputs( "\033[32m", p );
-    time_t now = time( NULL );
-    struct tm *mytime = localtime( &now );
-    char buffer[32];
-    strftime( buffer, sizeof buffer, "%X", mytime );
-    tputs( buffer, p );
-    tputs( " >\033[0m ", p );
+static int command( void* p, char** argv, int argc ) {
+    if( 1 == argc ) {
+        tputs( "This command just prints the arguments.\r\n", p );
+        return 0;
+    }
+    for( int i = 1; i < argc; ++i )
+        tputs( argv[i], p ), tputs( "\r\n", p );
+    return 0;
+}
+
+static int sum( void* p, char** argv, int argc ) {
+    if( 3 > argc || ( 1 < argc && 0 == strcmp( "help", argv[1] ) ) ) {
+        tputs( "Usage: sum <number> <number> [<number> ...]\r\n", p );
+        return 0;
+    }
+    long rslt = 0;
+    for( int i = 1; i < argc; ++i ) {
+        char* end;
+        long const a = strtol( argv[i], &end, 10 );
+        if( end == argv[i] || '\0' != *end ) {
+            tputs( "Error: Bad argument\a\r\n", p );
+            return -1;
+        }
+        rslt += a;
+    }
+    char buff[16];
+    sprintf( buff, "%ld\r\n", rslt );
+    tputs( buff, p );
+    return 0;
+}
+
+static int mult( void* p, char** argv, int argc ) {
+    if( 3 > argc || ( 1 < argc && 0 == strcmp( "help", argv[1] ) ) ) {
+        tputs( "Usage: sum <number> <number> [<number> ...]\r\n", p );
+        return 0;
+    }
+    long rslt = 1;
+    for( int i = 1; i < argc; ++i ) {
+        char* end;
+        long const a = strtol( argv[i], &end, 10 );
+        if( end == argv[i] || '\0' != *end ) {
+            tputs( "Error: Bad argument\a\r\n", p );
+            return -1;
+        }
+        rslt *= a;
+    }
+    char buff[16];
+    sprintf( buff, "%ld\r\n", rslt );
+    tputs( buff, p );
+    return 0;
+}
+
+
+static int clear( void* p, char** argv, int argc ) {
+    tputs( "\ec\e[2J", p );
+    return 0;
 }
 
 static void client( void* p ) {
@@ -44,18 +93,12 @@ static void client( void* p ) {
     static char const* const names[] = {
         "clear"   ,
         "help"    ,
-        "history" ,
         "exit"    ,
-        "hints"   ,
-        "request" ,
-        "make"    ,
-        "release" ,
-        "main"    ,
-        "range"   ,
-        "measure" ,
-        "rate"    ,
-        "meeting"
+        "command" ,
+        "sum"     ,
+        "mult"
     };
+
     static struct hints const hints = {
         .str  = names,
         .qty  = sizeof names / sizeof *names
@@ -89,8 +132,10 @@ static void client( void* p ) {
 
     for(;;) {
 
-        prompt( p );
+        /* Print prompt: */
+        tputs( "\033[32m \\>\033[0m ", p );
 
+        /* Get line: */
         int len = vt100_getline( &vt100 );
         if( 0 == len )
             continue;
@@ -98,31 +143,49 @@ static void client( void* p ) {
             fprintf( stderr, "%s%d\n", "Error", len );
             break;
         }
-        printf( "%3d) %s\n", clientid( p ), vt100.line );
 
-        if( 0 == strcmp( "exit", vt100.line ) )
+        /* Parse arguments: */
+        char* argv[10];
+        int const argc = clarg( argv, sizeof argv / sizeof *argv, vt100.line );
+        if( 0 > argc )
+            continue;
+
+        /* Print arguments in local terminal: */
+        printf( "%s%d\n", "Client: ", clientid( p ) );
+        for( int i = 0; i < argc; ++i )
+            printf( " [%d] %s\n", i, argv[i] );
+
+        /* Process arguments: */
+        if( 0 == strcmp( "exit", *argv ) )
             break;
 
-        if ( 0 == strcmp( "clear", vt100.line ) )
-            tputs( "\ec\e[2J", p );
-
-        else if ( 0 == strcmp( "help", vt100.line ) )
+        if ( 0 == strcmp( "help", *argv ) ) {
             for( int i = 0; i < hints.qty; ++i )
                 tputs( hints.str[i], p ), tputs( "\r\n", p );
+            continue;
+        }
 
-        else if ( 0 == strcmp( "history", vt100.line ) )
-            history_init( &hist, &histcfg );
-
-        else if( 0 == strcmp( "hints", vt100.line ) )
-            for( int i = 0; i < hints.qty; ++i )
-                tputs( hints.str[i], p ), tputs( "\r\n", p );
-
+        static struct {
+            char const* name;
+            int(*func)(void*,char**,int);
+        } const cmd [] = {
+            { "sum",     sum     },
+            { "mult",    mult    },
+            { "command", command },
+            { "clear",   clear   }
+        };
+        for( int i = 0; i < sizeof cmd / sizeof *cmd; ++i ) {
+            if( 0 == strcmp( cmd[i].name, *argv ) ) {
+                int rslt = cmd[i].func( p, argv, argc );
+                printf( "%s%s%d\n", *argv, " return: ", rslt );
+                break;
+            }
+        }
     }
 
     free( histcfg.lines );
 }
 
 int main( void ) {
-    server( client );
-    return 0;
+    return server( client );
 }

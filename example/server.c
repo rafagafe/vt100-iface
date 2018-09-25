@@ -32,6 +32,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include "server.h"
+#include "../vt100.h"
 
 #define DEFAULT_PORT "2277"
 
