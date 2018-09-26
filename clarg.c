@@ -43,7 +43,7 @@ static int getesc( int ch ) {
     static struct { char ch; char code; } const lut [] = {
         { '\"', '\"' }, { '\\', '\\' }, { '/',  '/'  }, { 'b',  '\b' },
         { 'f',  '\f' }, { 'n',  '\n' }, { 'r',  '\r' }, { 't',  '\t' },
-        { 'a', '\a' }, { 'e', '\033' }
+        { 'a',  '\a' }, { 'e', '\033' }
     };
     for( int i = 0; i < sizeof lut / sizeof *lut; ++i )
         if ( lut[i].ch == ch )
