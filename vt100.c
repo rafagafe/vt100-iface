@@ -114,8 +114,8 @@ static void eraseend( void* p ) {
 /** Move the cursor one column forward.
   * @param st State of line capture. */
 static void cursorforward( struct vt100state* st ) {
-    int const param = 0 == st->param ? 1 : st->param;
-    int const toend = st->len - st->cur;
+    int const param   = 0 == st->param ? 1 : st->param;
+    int const toend   = st->len - st->cur;
     int const columns = toend < param ? toend : param;
     movecursor( columns, st->cfg->p );
     st->cur += columns;
@@ -124,7 +124,7 @@ static void cursorforward( struct vt100state* st ) {
 /** Move the cursor one column backward.
   * @param st State of line capture. */
 static void cursorbackward( struct vt100state* st ) {
-    int const param = 0 == st->param ? 1 : st->param;
+    int const param   = 0 == st->param ? 1 : st->param;
     int const tobegin = st->cur;
     int const columns = tobegin < param ? tobegin : param;
     movecursor( -columns, st->cfg->p );

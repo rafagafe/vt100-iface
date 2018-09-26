@@ -57,7 +57,7 @@ static int getesc( int ch ) {
 static char* parsearg( char* str ) {
     char* head = str;
     char* tail = str;
-    for( ; *head >= (unsigned)' ' && '\"' != *head; ++head, ++tail ) {
+    for( ; (unsigned)' ' <= *head && '\"' != *head; ++head, ++tail ) {
         if ( '\\' != *head )
             *tail = *head;
         else {
@@ -70,10 +70,12 @@ static char* parsearg( char* str ) {
             }
         }
     }
-    tail[ head == tail ? 0 : -1 ] = '\0';
-    return ++head;
+    head += '\"' == *head;
+    *tail = '\0';
+    return head;
 }
 
+/* Parse Command Line ARGuments */
 int clarg( char** argv, int max, char* line ) {
     for( int i = 0; i < max; ++i ) {
         line = skipspace( line );
