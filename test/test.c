@@ -28,6 +28,9 @@
 #include "../vt100.h"
 #include "../vt100-tgetc.h"
 
+enum {
+    verbose = 0
+};
 
 // ----------------------------------------------------- Test "framework": ---
 
@@ -87,8 +90,7 @@ int tputc( int c, void* p ) {
         return -1;
     stream->output[ stream->iout++ ] = c;
     stream->output[ stream->iout ]   = '\0';
-    int const verbose = 0;
-    if ( verbose )
+    if ( 1 < verbose )
         printchar( c );
     return 0;
 }
@@ -132,7 +134,6 @@ static int processline( char const* input, char* line, int sizeline, struct hint
         .hist  = NULL,
         .hints = hints,
     };
-    int const verbose = 0;
     int const len = vt100_getline(&vt100);
     if( verbose )
         presult( &stream, line );
@@ -145,6 +146,7 @@ static int processline( char const* input, char* line, int sizeline, struct hint
 #define BS        "\177"    // Backspace key
 #define TAB       "\011"    // Tab key
 #define SHIFT_TAB "\033[Z"  // Shift + Tab keys
+
 
 // ----------------------------------------------------------- Unit tests: ---
 
@@ -282,6 +284,65 @@ static int hintBackward( void ) {
     check( 0 == strcmp( line, expected ) );
     done();
 }
+
+static int history( void ) {
+    enum {
+        nunlines = 8,
+        linelen  = 8
+    };
+    char histmem[nunlines][linelen];
+    struct historycfg const histcfg = {
+        .lines    = histmem,
+        .linelen  = linelen,
+        .numlines = nunlines,
+    };
+    struct history hist;
+    history_init( &hist, &histcfg );
+    static char const* const inputs[] = {
+        "One\n", "Two\n", "Three\n", "Four\n", "Five\n", "Six\n", "Seven\n"
+    };
+    int const qty = sizeof inputs / sizeof *inputs;
+    struct stream stream;
+    char line[ 128 ];
+    struct vt100 const vt100 = {
+        .p     = &stream,
+        .line  = line,
+        .max   = sizeof line,
+        .hist  = &hist,
+        .hints = NULL,
+    };
+    for( int i = 0; i < qty; ++i ) {
+        memset( &stream, 0, sizeof stream );
+        stream.input = inputs[i];
+        memset( line, 0, sizeof line );
+        int const len = vt100_getline( &vt100 );
+        if( verbose )
+            presult( &stream, line );
+        check( len == strlen( inputs[i] ) - 1 );
+        check( 0 == memcmp( line, inputs[i], len ) );
+    }
+    for( int i = qty - 1; 0 <= i; --i ) {
+        memset( &stream, 0, sizeof stream );
+        stream.input = "\033[A\n";
+        memset( line, 0, sizeof line );
+        int const len = vt100_getline( &vt100 );
+        if( verbose )
+            presult( &stream, line );
+        check( len == strlen( inputs[i] ) - 1 );
+        check( 0 == memcmp( line, inputs[i], len ) );
+    }
+    for( int i = 0; i < qty - 1; ++i ) {
+        memset( &stream, 0, sizeof stream );
+        stream.input = "\033[B\n";
+        memset( line, 0, sizeof line );
+        int const len = vt100_getline( &vt100 );
+        if( verbose )
+            presult( &stream, line );
+        check( len == strlen( inputs[i+1] ) - 1 );
+        check( 0 == memcmp( line, inputs[i+1], len ) );
+    }
+    done();
+}
 // --------------------------------------------------------- Execute tests: ---
 
 int main( void ) {
@@ -297,7 +358,8 @@ int main( void ) {
         { home,                 "Home key"                 },
         { end,                  "End key"                  },
         { hintForward,          "Hint forward"             },
-        { hintBackward,         "Hint backward"            }
+        { hintBackward,         "Hint backward"            },
+        { history,              "History"                  }
     };
     return test_suit( tests, sizeof tests / sizeof *tests );
 }
