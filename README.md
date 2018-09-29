@@ -70,7 +70,7 @@ If you do not use any of these features, its pointer can be left to NULL. The si
 static char line[80];
 
 /* Configuration */
-static struct vt100 const vt100 {
+static struct vt100 const vt100 = {
     .p     = NULL,
     .hist  = NULL,
     .hints = NULL,
@@ -120,7 +120,7 @@ A configuration of vt100-iface instance that uses a history would be like this:
     static char line[80];
 
     /* Configuration */
-    static struct vt100 const vt100 {
+    static struct vt100 const vt100 = {
         .p     = NULL,
         .hist  = &hist, /* <--<< Add history handle */
         .hints = NULL,
@@ -162,7 +162,7 @@ A configuration of vt100-iface instance that uses a hints set would be like this
     static char line[80];
 
     /* Configuration */
-    static struct vt100 const vt100 {
+    static struct vt100 const vt100 = {
         .p     = NULL,
         .hist  = NULL,
         .hints = &hints, /* <--<< Add hints set handle */
