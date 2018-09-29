@@ -53,15 +53,15 @@ struct hints {
     int qty;
 };
 
+/** Configuration to capture a line from a vt100 terminal */
 struct vt100 {
     /** A valid instance of a terminal. It will be passed to tputc() and tputs() */
     void* p;
-    int max;                    /**< Size of line buffer.                    */
-    char* line;                 /**< Destination of line capture.            */
     struct history* hist;       /**< History handle or null if there is not. */
     struct hints const* hints;  /**< Hints handle or null if there is not.   */
+    char* line;                 /**< Destination buffer.                     */
+    int max;                    /**< Size of line buffer.                    */
 };
-
 
 /** State of line capture. For internal use. */
 struct vt100state {
