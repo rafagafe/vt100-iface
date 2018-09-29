@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include "../vt100.h"
 #include "../vt100-tgetc.h"
+#include "../clarg.h"
 
 enum {
     verbose = 0
@@ -343,10 +344,32 @@ static int history( void ) {
     }
     done();
 }
+
+static int args( void ) {
+    char line[] = "command argument1 \"\\targument \\\"2\\\"\" argument 3";
+    static char const* const expected[] = {
+        "command",
+        "argument1",
+        "\targument \"2\"",
+        "argument",
+        "3"
+    };
+    char* argv[ sizeof expected / sizeof *expected ];
+    int const argc = clarg( argv, sizeof argv / sizeof *argv, line );
+    check( sizeof expected / sizeof *expected == argc );
+    for( int i = 0; i < argc; ++i ) {
+        if( verbose )
+            printf( "[%d] %s\n", i, argv[i] );
+        check( 0 == strcmp( argv[i], expected[i]) );
+    }
+    done();
+}
+
+
 // --------------------------------------------------------- Execute tests: ---
 
 int main( void ) {
-    static struct test const tests[] = {
+    static struct test const tests [] = {
         { basicInput,           "Basic input"              },
         { arrows,               "Arrows char by char"      },
         { arrows2,              "Arrows word by word"      },
@@ -359,7 +382,8 @@ int main( void ) {
         { end,                  "End key"                  },
         { hintForward,          "Hint forward"             },
         { hintBackward,         "Hint backward"            },
-        { history,              "History"                  }
+        { history,              "History"                  },
+        { args,                 "Command line arguments"   }
     };
     return test_suit( tests, sizeof tests / sizeof *tests );
 }
