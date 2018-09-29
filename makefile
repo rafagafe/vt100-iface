@@ -11,8 +11,8 @@ all: clean build
 test: test.exe
 	./test.exe
 	
-test.exe: vt100.o vt100-tgetc.o history.o test.o 
-	gcc -std=c99 -Wall -o test.exe vt100.o vt100-tgetc.o history.o test.o 
+test.exe: vt100.o vt100-tgetc.o history.o test.o clarg.o 
+	gcc -std=c99 -Wall -o test.exe vt100.o vt100-tgetc.o history.o test.o clarg.o 
 	
 example.exe: vt100.o vt100-tgetc.o clarg.o history.o main.o server.o
 	gcc -std=c99 -Wall -o example.exe vt100.o vt100-tgetc.o clarg.o history.o main.o server.o  -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic -lwsock32 -lws2_32 -lsetupapi
