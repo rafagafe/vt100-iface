@@ -20,11 +20,13 @@
   SOFTWARE.
 */
 
-#include "vt100.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+
+#include "vt100.h"
+#include "vt100-io.h"
 
 /** Look for the next word start in array of characters.
   * @param str Pointer to the first character in the array.

@@ -20,7 +20,13 @@
   SOFTWARE.
 */
 
-#include "vt100-tgetc.h"
+
+/*
+ * This file must be excluded from the build if the tgetc function is not defined.
+ */
+
+#include "vt100.h"
+#include "vt100-io.h"
 
 /* Get blocked until capture a line. */
 int vt100_getline( struct vt100 const* vt100 ) {

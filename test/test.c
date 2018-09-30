@@ -25,9 +25,10 @@
 #include <string.h>
 #include <stdint.h>
 #include <ctype.h>
+
 #include "../vt100.h"
-#include "../vt100-tgetc.h"
 #include "../clarg.h"
+#include "../vt100-io.h"
 
 enum {
     verbose = 0

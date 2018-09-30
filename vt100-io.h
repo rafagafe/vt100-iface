@@ -20,31 +20,39 @@
   SOFTWARE.
 */
 
-#ifndef VT100_UTIL_H
-#define	VT100_UTIL_H
+#ifndef VT100_CALLBACKS_H
+#define	VT100_CALLBACKS_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#include "vt100.h"
+/** Callback function. It has to be defined by the user.
+  * It prints a character to a terminal.
+  * @param c Character to be sent.
+  * @param p A valid instance of a terminal.
+  * @return  On success, a non-negative value is returned.
+  *          On error, -1 is returned. */
+int tputc( int c, void* p );
 
 /** Callback function. It has to be defined by the user.
+  * It prints a null-terminated string to a terminal.
+  * @param c Character to be sent.
+  * @param p A valid instance of a terminal.
+  * @return  On success, a non-negative value is returned.
+  *          On error, -1 is returned. */
+int tputs( char const* str, void* p );
+
+/** Callback function. It optionally has to be defined by the user.
   * Get blocked until get a character from a terminal.
   * @param p A valid instance of a terminal.
-  * @retval On success, the character read is returned (promoted to an int value).
+  * @retval On success, the character read is returned (promoted to an integer).
   * @retval On error, a negative value. */
 int tgetc( void* p );
-
-/** Get blocked until capture a line.
-  * @param vt100 A vt100 configure.
-  * @retval On success, a non negative with the length of the line captured.
-  * @retval On error, a negative value returned by tgetc(). */
-int vt100_getline( struct vt100 const* vt100 );
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* VT100_UTIL_H */
+#endif	/* VT100_CALLBACKS_H */
 

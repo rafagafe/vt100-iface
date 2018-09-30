@@ -29,22 +29,6 @@ extern "C" {
 
 #include "history.h"
 
-/** Callback function. It has to be defined by the user.
-  * It prints a character to a terminal.
-  * @param c Character to be sent.
-  * @param p A valid instance of a terminal.
-  * @return  On success, a non-negative value is returned.
-  *          On error, -1 is returned  */
-int tputc( int c, void* p );
-
-/** Callback function. It has to be defined by the user.
-  * It prints a null-terminated string to a terminal.
-  * @param c Character to be sent.
-  * @param p A valid instance of a terminal.
-  * @return  On success, a non-negative value is returned.
-  *          On error, -1 is returned  */
-int tputs( char const* str, void* p );
-
 /** Set of hints for a line capture. */
 struct hints {
     /** Pointer to array of null-terminated strings with the hints. */
@@ -89,6 +73,12 @@ int vt100_char( struct vt100state* st, int c );
   * @param st State of line capture. */
 void vt100_newline( struct vt100state* st );
 
+/** Get blocked until capture a line.
+  * It can be used only if the tgetc function is defined.
+  * @param vt100 A vt100 configure.
+  * @retval On success, a non negative with the length of the line captured.
+  * @retval On error, a negative value returned by tgetc(). */
+int vt100_getline( struct vt100 const* vt100 );
 
 #ifdef	__cplusplus
 }

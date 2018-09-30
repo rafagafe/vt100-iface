@@ -26,7 +26,8 @@
 #include "server.h"
 #include <stdlib.h>
 #include <time.h>
-#include "../vt100-tgetc.h"
+#include "../vt100.h"
+#include "../vt100-io.h"
 #include "../clarg.h"
 
 static int command( void* p, char** argv, int argc );
@@ -86,8 +87,9 @@ static void client( void* p ) {
         }
 
         /* Parse arguments: */
-        char* argv[10];
-        int const argc = clarg( argv, sizeof argv / sizeof *argv, vt100.line );
+        enum { maxargc = 10 };
+        char* argv[ maxargc ];
+        int const argc = clarg( argv, maxargc, vt100.line );
         if( 0 > argc )
             continue;
 
@@ -185,6 +187,6 @@ static int mult( void* p, char** argv, int argc ) {
 }
 
 static int clear( void* p, char** argv, int argc ) {
-    tputs( "\ec\e[2J", p );
+    tputs( "\033c\033[2J", p );
     return 0;
 }
