@@ -35,7 +35,7 @@ int tputs( char const* str, void* p );
 
 Currently vt100-iface does not evaluate the return value of these functions. The parameter p is given by the user in the configuration of each instance of vt100-iface.
 
-Optionally a third function can be defined to read characters from a terminal. It is useful in systems where it does not matter that the reading in the terminal is blocking, usually in multi-threaded systems. If you do not need this feature, exclude the file vt100-tgetc.c from the compilation.
+Optionally a third function can be defined to read characters from a terminal. It is useful in systems where it does not matter that the reading in the terminal is blocking, usually in multi-threaded systems. If you do not need this feature, exclude the file vt100-tgetc.c from the build.
 
 ```C
 /** Get blocked until get a character from a terminal.
@@ -117,7 +117,7 @@ A configuration of vt100-iface instance that uses a history would be like this:
     history_init( &hist, &histcfg );
     
     /* Destination buffer */
-    static char line[80];
+    static char line[ linelen ];
 
     /* Configuration */
     static struct vt100 const vt100 = {
@@ -170,5 +170,139 @@ A configuration of vt100-iface instance that uses a hints set would be like this
         .max   = sizeof line
     };  
     
+```
+
+# Using with tgetc
+
+Using vt100-iface with tgetc is very easy because the vt100_getline() function is blocking. When the vt100_getline() function returns an error or a line is captured. 
+
+```C
+extern void doerror( int );
+extern void doline( char const* );
+
+void func() {
+
+    //...
+    
+    /* Configuration */
+    static struct vt100 const vt100 = {
+        //...
+    };  
+    
+    for(;;) {    
+        int len = vt100_getline( &vt100 );
+        if( 0 > len ) {
+            doerror( len );
+            continue;
+        }
+        doline( vt100.line );
+     }
+}   
+```
+
+# Using without tgetc
+
+When using vt100-iface without tgetc one should poll if a character has been received. The received characters are introduced in vt100_char function until it returns a non-negative value, which is the length of the captured line.
+
+```C
+extern bool anyCharReceived( void );
+extern int getCharReceived( void );
+extern void doline( char const* );
+
+/* Periodically invoked */
+void statemachine( void ) {
+    
+    /* state of state machine: */
+    static enum {
+        INIT,
+        WAIT_CHAR
+    } state = INIT;
+    
+    /* Destination buffer */
+    static char line[80];
+
+    /* Configuration */
+    static struct vt100 const vt100 = {
+        .p     = NULL,
+        .hist  = NULL,
+        .hints = NULL,
+        .line  = line,
+        .max   = sizeof line
+    };
+    
+    /* vt100-iface state: */
+    static struct vt100state st;
+    
+    switch( state ) {
+        
+        case INIT:
+            vt100_init( &st, &vt100 );
+            state = WAIT_CHAR;
+            break;
+            
+        case WAIT_CHAR: {
+            if ( anyCharReceived() ) {
+                int ch = getCharReceived();
+                int len = vt100_char( st, ch );
+                if ( 0 <= len )
+                    doline( line );
+            }
+            break;
+        }
+        
+    }
+}
+
+```
+
+# Command line arguments parser
+
+The files clarg.c and clarg.h are a standalone module. You can use for other purposes. 
+
+```C
+extern void doerror( int err );
+extern int docommand( int argc, char** argv );
+
+int func() {
+
+    enum {
+        maxargc = 10
+    };
+
+    //...
+    
+    /* Configuration */
+    static struct vt100 const vt100 = {
+        //...
+    };  
+    
+    for(;;) {
+
+        /* Print prompt: */
+        tputs( " \\> ", p );
+
+        /* Get line: */
+        int len = vt100_getline( &vt100 );
+        if( 0 == len )
+            continue;            
+        if( 0 > len ) {
+            fprintf( stderr, "%s%d\n", "Error", len );
+            return -1;
+        }
+
+        /* Parse arguments: */
+        char* argv[ maxargc ];
+        int argc = clarg( argv, maxargc, vt100.line );
+        if( 0 > argc )
+            continue;
+        
+        /* Execute command: */
+        int err = docommand( argc, argv );
+        if( err )
+            fprintf( stderr, "%s%s%s%d\n", "Command ", *argv, " returned the error: ", err );
+            
+    }
+            
+}   
 ```
 
