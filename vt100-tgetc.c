@@ -26,7 +26,7 @@
  */
 
 #include "vt100.h"
-#include "vt100-io.h"
+#include "terminal-io.h"
 
 /* Get blocked until capture a line. */
 int vt100_getline( struct vt100 const* vt100 ) {

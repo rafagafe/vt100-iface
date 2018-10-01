@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "../vt100.h"
-#include "../vt100-io.h"
+#include "../terminal-io.h"
 #include "../clarg.h"
 
 static int command( void* p, char** argv, int argc );

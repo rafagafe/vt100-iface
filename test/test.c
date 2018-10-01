@@ -28,7 +28,7 @@
 
 #include "../vt100.h"
 #include "../clarg.h"
-#include "../vt100-io.h"
+#include "../terminal-io.h"
 
 enum {
     verbose = 0

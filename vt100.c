@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 #include "vt100.h"
-#include "vt100-io.h"
+#include "terminal-io.h"
 
 /** Look for the next word start in array of characters.
   * @param str Pointer to the first character in the array.
