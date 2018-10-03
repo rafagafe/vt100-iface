@@ -58,9 +58,8 @@ void history_line( struct history* hist, char const* line ) {
     else {
         if( ++hist->newest == hist->cfg->numlines )
             hist->newest = 0;
-        if( hist->newest == hist->oldest )
-            if( ++hist->oldest == hist->cfg->numlines )
-                hist->oldest = 0;
+        if( hist->newest == hist->oldest && ++hist->oldest == hist->cfg->numlines )
+            hist->oldest = 0;
     }
     strncpy( (*lines)[ hist->newest ], line, sizeof **lines );
     hist->pos = -1;

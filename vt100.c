@@ -316,7 +316,7 @@ static void escapeBigO( struct vt100state* st, int c ) {
 }
 
 /** State codes of line capture. */
-enum estate {
+enum state {
     CHAR,       /**< Waiting for a print character or escape. */
     ESCAPE,     /**< Escape character is received.            */
     BRACKET,    /**< Received <ESC>[                          */

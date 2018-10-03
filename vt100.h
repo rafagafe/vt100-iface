@@ -21,7 +21,7 @@
 */
 
 #ifndef VT100_H
-#define	VT100_H
+#define VT100_H
 
 #ifdef	__cplusplus
 extern "C" {

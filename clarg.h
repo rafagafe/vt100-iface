@@ -21,7 +21,7 @@
 */
 
 #ifndef CLARG_H
-#define	CLARG_H
+#define CLARG_H
 
 #ifdef	__cplusplus
 extern "C" {

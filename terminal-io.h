@@ -20,8 +20,8 @@
   SOFTWARE.
 */
 
-#ifndef VT100_CALLBACKS_H
-#define	VT100_CALLBACKS_H
+#ifndef TERMINAL_IO_H
+#define TERMINAL_IO_H
 
 #ifdef	__cplusplus
 extern "C" {

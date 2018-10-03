@@ -21,7 +21,7 @@
 */
 
 #ifndef HISTORY_H
-#define	HISTORY_H
+#define HISTORY_H
 
 #ifdef	__cplusplus
 extern "C" {
