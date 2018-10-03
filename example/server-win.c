@@ -20,6 +20,9 @@
   SOFTWARE.
 */
 
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
+
 #undef UNICODE
 
 #define WIN32_LEAN_AND_MEAN
@@ -31,6 +34,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <assert.h>
+#include <ctype.h>
 #include "server.h"
 #include "../vt100.h"
 

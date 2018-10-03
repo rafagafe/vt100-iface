@@ -26,7 +26,7 @@ test.exe: vt100.o vt100-tgetc.o history.o test.o clarg.o
 	gcc -o $@ $?
 	
 app.exe: vt100.o vt100-tgetc.o clarg.o history.o main.o server.o
-	gcc -o $@ $? -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic -lwsock32 -lws2_32 -lsetupapi
+	gcc -o $@ $? -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread.dll -Wl,-Bdynamic -lwsock32 -lws2_32
 
 app: vt100.o vt100-tgetc.o clarg.o history.o main.o server.o
 	gcc -o $@ $? -lpthread
