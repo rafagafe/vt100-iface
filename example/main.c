@@ -34,12 +34,13 @@ static int command( void* p, char** argv, int argc );
 static int sum( void* p, char** argv, int argc );
 static int mult( void* p, char** argv, int argc );
 static int clear( void* p, char** argv, int argc );
+static int login( void* p, char** argv, int argc ); 
 
 static void client( void* p ) {
 
     /* Configure the hints: */
     static char const* const names[] = {
-        "clear", "help", "exit", "command", "sum", "mult"
+        "clear", "help", "exit", "command", "sum", "mult", "login"
     };
     static struct hints const hints = {
         .str  = names,
@@ -78,7 +79,7 @@ static void client( void* p ) {
         tputs( "\033[32m \\>\033[0m ", p );
 
         /* Get line: */
-        int len = vt100_getline( &vt100 );
+        int len = vt100_getline( &vt100, echo_on );
         if( 0 == len )
             continue;
         if( 0 > len ) {
@@ -116,7 +117,8 @@ static void client( void* p ) {
             { "sum",     sum     },
             { "mult",    mult    },
             { "command", command },
-            { "clear",   clear   }
+            { "clear",   clear   },
+            { "login",   login   }
         };
         for( int i = 0; i < sizeof cmd / sizeof *cmd; ++i ) {
             if( 0 == strcmp( cmd[i].name, *argv ) ) {
@@ -190,3 +192,35 @@ static int clear( void* p, char** argv, int argc ) {
     tputs( "\033c\033[2J", p );
     return 0;
 }
+
+static int login( void* p, char** argv, int argc ) {
+    char buff[32];
+    struct vt100 const vt100 = {
+        .p     = p,
+        .max   = sizeof buff,
+        .line  = buff,
+        .hist  = NULL,
+        .hints = NULL,
+    };
+    static struct { char const* filed; enum echo echo; } const lut [] = {
+        { "Name:       ", echo_on   },
+        { "Password 1: ", echo_pass },
+        { "Password 2: ", echo_off  }
+    };
+    for( int i = 0; i < sizeof lut / sizeof *lut; ++i ) {
+        for(;;) {
+            tputs( lut[i].filed, p );
+            int len = vt100_getline( &vt100, lut[i].echo );
+            if( 0 > len ) {
+                printf( "%s%d\n", "Error: ", len );
+                return len;
+            }
+            if( 4 < len )
+                break;
+            tputs( "It is too short\r\n", p );
+        }
+        printf( "%s%s\n", lut[i].filed, buff );        
+    }   
+    return 0;
+}
+

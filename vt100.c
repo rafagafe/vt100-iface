@@ -113,23 +113,27 @@ static void eraseend( void* p ) {
     tputs( "\033[K", p );
 }
 
-/** Move the cursor one column forward.
+/** Move the cursor n columns forward.
+  * In st->param is the number of columns. 
   * @param st State of line capture. */
 static void cursorforward( struct vt100state* st ) {
     int const param   = 0 == st->param ? 1 : st->param;
     int const toend   = st->len - st->cur;
     int const columns = toend < param ? toend : param;
-    movecursor( columns, st->cfg->p );
+    if( echo_off != st->echo )    
+        movecursor( columns, st->cfg->p );
     st->cur += columns;
 }
 
-/** Move the cursor one column backward.
+/** Move the cursor n columns backward.
+  * In st->param is the number of columns.
   * @param st State of line capture. */
 static void cursorbackward( struct vt100state* st ) {
     int const param   = 0 == st->param ? 1 : st->param;
     int const tobegin = st->cur;
     int const columns = tobegin < param ? tobegin : param;
-    movecursor( -columns, st->cfg->p );
+    if( echo_off != st->echo )
+        movecursor( -columns, st->cfg->p );
     st->cur -= columns;
 }
 
@@ -137,19 +141,21 @@ static void cursorbackward( struct vt100state* st ) {
   * @param st State of line capture.
   * @param c  Character value to be inserted. */
 static void addchar( struct vt100state* st, int c ) {
-    if( st->len + 3 >= st->cfg->max )
+    if( st->len + 2 >= st->cfg->max )
         return;
     if( st->cur < st->len )
         eraseend( st->cfg->p );
     for( int i = st->cur; i <= st->len; ++i ) {
-        tputc( c, st->cfg->p );
+        if( echo_off != st->echo )
+            tputc( echo_pass == st->echo ? '*' : c, st->cfg->p );
         int tmp = st->cfg->line[i];
         st->cfg->line[i] = c;
         c = tmp;
     }
     ++st->cur;
     ++st->len;
-    movecursor( st->cur - st->len, st->cfg->p );
+    if( echo_off != st->echo )
+        movecursor( st->cur - st->len, st->cfg->p );
 }
 
 /** Remove the character before the cursor
@@ -157,28 +163,34 @@ static void addchar( struct vt100state* st, int c ) {
 static void removechar( struct vt100state* st ) {
     if( 0 == st->cur )
         return;
-    tputc( '\b', st->cfg->p );
-    eraseend( st->cfg->p );
+    if( echo_off != st->echo ) {
+        tputc( '\b', st->cfg->p );
+        eraseend( st->cfg->p );
+    }
     for( int i = st->cur; i < st->len; ++i ) {
         st->cfg->line[i-1] = st->cfg->line[i];
-        tputc( st->cfg->line[i], st->cfg->p );
+        if( echo_off != st->echo )
+            tputc( echo_pass == st->echo ? '*' : st->cfg->line[i], st->cfg->p );
     }
     --st->cur;
     --st->len;
-    movecursor( st->cur - st->len, st->cfg->p );
+    if( echo_off != st->echo )
+        movecursor( st->cur - st->len, st->cfg->p );
 }
 
 /** Set the cursor to the first character of the line.
   * @param st State of line capture. */
 static void home( struct vt100state* st ) {
-    movecursor( -st->cur, st->cfg->p );
+    if( echo_off != st->echo )
+        movecursor( -st->cur, st->cfg->p );
     st->cur = 0;
 }
 
 /** Set the cursor to the end of the line.
   * @param st State of line capture. */
 static void end( struct vt100state* st ) {
-    movecursor( st->len - st->cur, st->cfg->p );
+    if( echo_off != st->echo )
+        movecursor( st->len - st->cur, st->cfg->p );
     st->cur = st->len;
 }
 
@@ -188,12 +200,15 @@ static void delete( struct vt100state* st ) {
     if( st->cur == st->len )
         return;
     --st->len;
-    eraseend( st->cfg->p );
+    if( echo_off != st->echo )
+        eraseend( st->cfg->p );
     for( int i = st->cur; i < st->len; ++i ) {
         st->cfg->line[i] = st->cfg->line[i+1];
-        tputc( st->cfg->line[i], st->cfg->p );
+        if( echo_off != st->echo )
+            tputc( echo_pass == st->echo ? '*' : st->cfg->line[i], st->cfg->p );
     }
-    movecursor( st->cur - st->len, st->cfg->p );
+    if( echo_off != st->echo )
+        movecursor( st->cur - st->len, st->cfg->p );
 }
 
 /** Move the cursor to the next word start.
@@ -215,6 +230,8 @@ static void moveprevword( struct vt100state* st ) {
 /** Erase a complete word pointed by the cursor.
   * @param st State of line capture. */
 void eraseword( struct vt100state* st ) {
+    if( echo_on != st->echo )
+        return;
     int const first = prevword( st->cfg->line, st->cur );
     int const end   = nextword( st->cfg->line, first, st->len );
     movecursor( first - st->cur, st->cfg->p );
@@ -249,7 +266,7 @@ static void refill( struct vt100state* st, char const* str ) {
 /** Write in the line the next history entry that matches.
   * @param st State of line capture. */
 static void nextentry( struct vt100state* st ) {
-    if( NULL == st->cfg->hist )
+    if( echo_on != st->echo || NULL == st->cfg->hist )
         return;
     char const* entry = history_forward( st->cfg->hist, st->cfg->line, st->cur );
     refill( st, NULL == entry ? "" : entry + st->cur );
@@ -258,7 +275,7 @@ static void nextentry( struct vt100state* st ) {
 /** Write in the line the previous history entry that matches.
   * @param st State of line capture. */
 static void preventry( struct vt100state* st ) {
-    if( NULL == st->cfg->hist )
+    if( echo_on != st->echo || NULL == st->cfg->hist )
         return;
     char const* entry = history_backward( st->cfg->hist, st->cfg->line, st->cur );
     if( NULL != entry )
@@ -269,7 +286,7 @@ static void preventry( struct vt100state* st ) {
   * @param st State of line capture.
   * @param forward non-zero forward or zero backward. */
 static void hint( struct vt100state* st, int forward ) {
-    if( NULL == st->cfg->hints )
+    if( echo_on != st->echo || NULL == st->cfg->hints )
         return;
     int const h = ( forward ? nexthint : prevhint )( st->cfg->hints, st->cfg->line, st->cur, st->h );
     if( 0 > h )
@@ -285,9 +302,7 @@ static void cursorctrl( struct vt100state* st ) {
         case 1: home( st );   break; // Home key
         case 3: delete( st ); break; // Delete key
         case 4: end( st );    break; // End key
-        default:;
     }
-    return;
 }
 
 /** Process a VT100 command: <ESC>[{num}{char}
@@ -309,6 +324,8 @@ static void escapeSquareBracket( struct vt100state* st, int c ) {
   * @param st State of line capture.
   * @param c Character ID of VT100 command.  */
 static void escapeBigO( struct vt100state* st, int c ) {
+    if( echo_on != st->echo )
+        return;
     switch( c ) {
         case 'C': movenextword( st ); break; // Shift + Right Arrow
         case 'D': moveprevword( st ); break; // Shift + Left Arrow
@@ -317,20 +334,21 @@ static void escapeBigO( struct vt100state* st, int c ) {
 
 /** State codes of line capture. */
 enum state {
-    CHAR,       /**< Waiting for a print character or escape. */
-    ESCAPE,     /**< Escape character is received.            */
-    BRACKET,    /**< Received <ESC>[                          */
-    BIG_O,      /**< Received <ESC>O                          */
+    CHAR,    /**< Waiting for a print character or escape. */
+    ESCAPE,  /**< Escape character is received.            */
+    BRACKET, /**< Received <ESC>[                          */
+    BIG_O,   /**< Received <ESC>O                          */
 };
 
 /*  Initialize a state of line capture. */
-void vt100_init( struct vt100state* st, struct vt100 const* vt100 ) {
+void vt100_init( struct vt100state* st, struct vt100 const* vt100, enum echo echo ) {
     *st = ( struct vt100state ) {
         .len   = 0,
         .cur   = 0,
         .h     = 0,
         .state = CHAR,
         .cfg   = vt100,
+        .echo  = echo
     };
 }
 
@@ -343,10 +361,10 @@ void vt100_newline( struct vt100state* st ) {
 
 /** Control keys codes used. */
 enum ctrlkey {
-    BS  =   8, /**< Backspace  */
-    TAB =   9, /**< Tabulate   */
-    ESC =  27, /**< Escape     */
-    DEL = 127, /**< Delete     */
+    BS  =   8, /**< Backspace */
+    TAB =   9, /**< Tabulate  */
+    ESC =  27, /**< Escape    */
+    DEL = 127, /**< Delete    */
 };
 
 /* Process a received character in a line capture. */
@@ -370,12 +388,13 @@ int vt100_char( struct vt100state* st, int c ) {
                 case DEL: removechar( st );   break; // Backspace
                 case TAB: hint( st, 1 );      break; // Tab
                 case BS:  eraseword( st );    break; // Shift + backspace
-                default:
+                default:                    
                     if ( isprint( c ) )
                         addchar( st, c );
             }
             break;
         }
+        
         case ESCAPE: {
             if ( '[' == c ) {
                 st->state = BRACKET;

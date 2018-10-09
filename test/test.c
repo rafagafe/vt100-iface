@@ -134,9 +134,9 @@ static int processline( char const* input, char* line, int sizeline, struct hint
         .line  = line,
         .max   = sizeline,
         .hist  = NULL,
-        .hints = hints,
+        .hints = hints
     };
-    int const len = vt100_getline(&vt100);
+    int const len = vt100_getline( &vt100, echo_on );
     if( verbose )
         presult( &stream, line );
     return len;
@@ -317,7 +317,7 @@ static int history( void ) {
         memset( &stream, 0, sizeof stream );
         stream.input = inputs[i];
         memset( line, 0, sizeof line );
-        int const len = vt100_getline( &vt100 );
+        int const len = vt100_getline( &vt100, echo_on );
         if( verbose )
             presult( &stream, line );
         check( len == strlen( inputs[i] ) - 1 );
@@ -327,7 +327,7 @@ static int history( void ) {
         memset( &stream, 0, sizeof stream );
         stream.input = "\033[A\n";
         memset( line, 0, sizeof line );
-        int const len = vt100_getline( &vt100 );
+        int const len = vt100_getline( &vt100, echo_on );
         if( verbose )
             presult( &stream, line );
         check( len == strlen( inputs[i] ) - 1 );
@@ -337,7 +337,7 @@ static int history( void ) {
         memset( &stream, 0, sizeof stream );
         stream.input = "\033[B\n";
         memset( line, 0, sizeof line );
-        int const len = vt100_getline( &vt100 );
+        int const len = vt100_getline( &vt100, echo_on );
         if( verbose )
             presult( &stream, line );
         check( len == strlen( inputs[i+1] ) - 1 );

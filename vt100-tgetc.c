@@ -29,9 +29,9 @@
 #include "terminal-io.h"
 
 /* Get blocked until capture a line. */
-int vt100_getline( struct vt100 const* vt100 ) {
+int vt100_getline( struct vt100 const* vt100, enum echo echo ) {
     struct vt100state st;
-    vt100_init( &st, vt100 );
+    vt100_init( &st, vt100, echo );
     for(;;) {
         int c = tgetc( vt100->p );
         if( 0 > c )

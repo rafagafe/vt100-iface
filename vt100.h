@@ -47,9 +47,17 @@ struct vt100 {
     int max;                    /**< Size of line buffer.                    */
 };
 
+/** Echo mode. */
+enum echo {
+    echo_on,
+    echo_off,
+    echo_pass
+};
+
 /** State of line capture. For internal use. */
 struct vt100state {
     struct vt100 const* cfg;
+    short echo;  /**< Echo mode.                  */
     short state; /**< For state machine.           */
     short param; /**< Parameter of vt100 commands. */
     short len;   /**< Actual line len.             */
@@ -60,7 +68,7 @@ struct vt100state {
 /** Initialize a state of line capture.
   * @param st    State of line capture.
   * @param vt100 Configuration of line capture. */
-void vt100_init( struct vt100state* st, struct vt100 const* vt100 );
+void vt100_init( struct vt100state* st, struct vt100 const* vt100, enum echo echo );
 
 /** Process a received character in a line capture.
   * @param st State of line capture.
@@ -78,7 +86,7 @@ void vt100_newline( struct vt100state* st );
   * @param vt100 A vt100 configure.
   * @retval On success, a non negative with the length of the line captured.
   * @retval On error, a negative value returned by tgetc(). */
-int vt100_getline( struct vt100 const* vt100 );
+int vt100_getline( struct vt100 const* vt100, enum echo echo );
 
 #ifdef	__cplusplus
 }
