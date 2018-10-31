@@ -99,7 +99,7 @@ static void movecursor( int colunms, void* p  ) {
             tputs( "\033[C", p );
             break;
         default: {
-            char buff[8];
+            char buff[14];
             sprintf( buff, "\033[%d%c", abs( colunms ), 0 > colunms ? 'D' : 'C' );
             tputs( buff, p );
             break;
