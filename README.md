@@ -190,7 +190,7 @@ void func() {
     };  
     
     for(;;) {    
-        int len = vt100_getline( &vt100 );
+        int len = vt100_getline( &vt100, echo_on );
         if( 0 > len ) {
             doerror( len );
             continue;
@@ -236,7 +236,7 @@ void statemachine( void ) {
     switch( state ) {
         
         case INIT:
-            vt100_init( &st, &vt100 );
+            vt100_init( &st, &vt100, echo_on );
             state = WAIT_CHAR;
             break;
             
