@@ -23,13 +23,13 @@ test: test.exe
 	./test.exe
 	
 test.exe: vt100.o vt100-tgetc.o history.o test.o clarg.o 
-	gcc -o $@ $?
+	gcc -o $@ $^
 	
 app.exe: vt100.o vt100-tgetc.o clarg.o history.o main.o server.o
-	gcc -o $@ $? -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread.dll -Wl,-Bdynamic -lwsock32 -lws2_32
+	gcc -o $@ $^ -static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread.dll -Wl,-Bdynamic -lwsock32 -lws2_32
 
 app: vt100.o vt100-tgetc.o clarg.o history.o main.o server.o
-	gcc -o $@ $? -lpthread
+	gcc -o $@ $^ -lpthread
     
 vt100.o: vt100.c vt100.h terminal-io.h history.h
 	gcc $(CFLAGS) -c vt100.c
