@@ -282,7 +282,7 @@ int func() {
         tputs( " \\> ", p );
 
         /* Get line: */
-        int len = vt100_getline( &vt100 );
+        int len = vt100_getline( &vt100, echo_on );
         if( 0 == len )
             continue;            
         if( 0 > len ) {
