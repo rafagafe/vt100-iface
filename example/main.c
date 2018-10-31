@@ -35,12 +35,13 @@ static int sum( void* p, char** argv, int argc );
 static int mult( void* p, char** argv, int argc );
 static int clear( void* p, char** argv, int argc );
 static int login( void* p, char** argv, int argc ); 
+static void printHistory( struct history const* hist, void* p );
 
 static void client( void* p ) {
 
     /* Configure the hints: */
     static char const* const names[] = {
-        "clear", "help", "exit", "command", "sum", "mult", "login"
+        "clear", "help", "exit", "command", "sum", "mult", "login", "history"
     };
     static struct hints const hints = {
         .str  = names,
@@ -108,6 +109,11 @@ static void client( void* p ) {
                 tputs( hints.str[i], p ), tputs( "\r\n", p );
             continue;
         }
+        
+        if ( 0 == strcmp( "history", *argv ) ) {
+            printHistory( &hist, p );
+            continue;
+        }        
 
         /* Process ordinary commands: */
         static struct {
@@ -224,3 +230,17 @@ static int login( void* p, char** argv, int argc ) {
     return 0;
 }
 
+
+static void printHistory( struct history const* hist, void* p ) {
+    typedef char(*array_t)[hist->cfg->numlines][hist->cfg->linelen];
+    array_t const lines = (array_t)hist->cfg->lines;
+    if ( -1 == hist->newest )
+        return;
+    for( int i = hist->oldest;; i = hist->cfg->numlines - 1 == i ? 0 : i + 1 ) {
+        puts( (*lines)[i] );
+        tputs( (*lines)[i], p );
+        tputs( "\r\n", p );
+        if ( hist->newest == i )
+            return;        
+    }
+}
