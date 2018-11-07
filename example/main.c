@@ -41,7 +41,7 @@ static void client( void* p ) {
 
     /* Configure the hints: */
     static char const* const names[] = {
-        "clear", "help", "exit", "command", "sum", "mult", "login", "history"
+        "clear", "help", "exit", "command", "sum", "mult", "login", "history", "echo"
     };
     static struct hints const hints = {
         .str  = names,
@@ -71,6 +71,8 @@ static void client( void* p ) {
         .hints = &hints,
     };
 
+    enum echo echo = echo_on;
+
     /* Clear screen: */
     tputs( "\033c\033[2J", p );
 
@@ -80,7 +82,7 @@ static void client( void* p ) {
         tputs( "\033[32m \\>\033[0m ", p );
 
         /* Get line: */
-        int len = vt100_getline( &vt100, echo_on );
+        int len = vt100_getline( &vt100, echo );
         if( 0 == len )
             continue;
         if( 0 > len ) {
@@ -109,11 +111,21 @@ static void client( void* p ) {
                 tputs( hints.str[i], p ), tputs( "\r\n", p );
             continue;
         }
-        
+
         if ( 0 == strcmp( "history", *argv ) ) {
             printHistory( &hist, p );
             continue;
-        }        
+        }
+
+        if ( 0 == strcmp( "echo", *argv ) ) {
+             if ( 2 != argc )
+                 continue;
+             if ( 0 == strcmp( "on", argv[1] ) )
+                 echo = echo_on;
+             else if ( 0 == strcmp( "off", argv[1] ) )
+                 echo = echo_off;
+             continue;
+        }
 
         /* Process ordinary commands: */
         static struct {
