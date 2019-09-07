@@ -142,13 +142,14 @@ static int processline( char const* input, char* line, int sizeline, struct hint
     return len;
 }
 
-#define HOME      "\033[1~" // Home key
-#define END       "\033[4~" // End key
-#define DEL       "\033[3~" // Delete hey
-#define BS        "\177"    // Backspace key
-#define TAB       "\011"    // Tab key
-#define SHIFT_TAB "\033[Z"  // Shift + Tab keys
-
+#define HOME       "\033[1~" // Home key
+#define END        "\033[4~" // End key
+#define DEL        "\033[3~" // Delete hey
+#define BS         "\177"    // Backspace key
+#define TAB        "\011"    // Tab key
+#define SHIFT_TAB  "\033[Z"  // Shift + Tab keys
+#define ARROW_UP   "\033[A"  // Arrow up key
+#define ARROW_DOWN "\033[B"  // Arrow down key
 
 // ----------------------------------------------------------- Unit tests: ---
 
@@ -325,7 +326,11 @@ static int history( void ) {
     }
     for( int i = qty - 1; 0 <= i; --i ) {
         memset( &stream, 0, sizeof stream );
-        stream.input = "\033[A\n";
+        char buff[80] = { [0] = '\0' };
+        for( int j = 0; j < qty - i; ++j )
+            strcat( buff, ARROW_UP );
+        strcat( buff, "\n" );
+        stream.input = buff;
         memset( line, 0, sizeof line );
         int const len = vt100_getline( &vt100, echo_on );
         if( verbose )
@@ -335,7 +340,7 @@ static int history( void ) {
     }
     for( int i = 0; i < qty - 1; ++i ) {
         memset( &stream, 0, sizeof stream );
-        stream.input = "\033[B\n";
+        stream.input = ARROW_DOWN"\n";
         memset( line, 0, sizeof line );
         int const len = vt100_getline( &vt100, echo_on );
         if( verbose )

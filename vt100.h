@@ -57,12 +57,13 @@ enum echo {
 /** State of line capture. For internal use. */
 struct vt100state {
     struct vt100 const* cfg;
-    short echo;  /**< Echo mode.                  */
+    short echo;  /**< Echo mode.                   */
     short state; /**< For state machine.           */
     short param; /**< Parameter of vt100 commands. */
     short len;   /**< Actual line len.             */
     short cur;   /**< Actual cursor possition.     */
     short h;     /**< Hint index.                  */
+    short fh;    /**< First history request.       */
 };
 
 /** Initialize a state of line capture.
@@ -93,4 +94,3 @@ int vt100_getline( struct vt100 const* vt100, enum echo echo );
 #endif
 
 #endif	/* VT100_H */
-

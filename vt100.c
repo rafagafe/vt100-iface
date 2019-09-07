@@ -114,13 +114,13 @@ static void eraseend( void* p ) {
 }
 
 /** Move the cursor n columns forward.
-  * In st->param is the number of columns. 
+  * In st->param is the number of columns.
   * @param st State of line capture. */
 static void cursorforward( struct vt100state* st ) {
     int const param   = 0 == st->param ? 1 : st->param;
     int const toend   = st->len - st->cur;
     int const columns = toend < param ? toend : param;
-    if( echo_off != st->echo )    
+    if( echo_off != st->echo )
         movecursor( columns, st->cfg->p );
     st->cur += columns;
 }
@@ -268,6 +268,7 @@ static void refill( struct vt100state* st, char const* str ) {
 static void nextentry( struct vt100state* st ) {
     if( echo_on != st->echo || NULL == st->cfg->hist )
         return;
+    st->fh = 0;
     char const* entry = history_forward( st->cfg->hist, st->cfg->line, st->cur );
     refill( st, NULL == entry ? "" : entry + st->cur );
 }
@@ -277,6 +278,10 @@ static void nextentry( struct vt100state* st ) {
 static void preventry( struct vt100state* st ) {
     if( echo_on != st->echo || NULL == st->cfg->hist )
         return;
+    if ( st->fh ) {
+        st->cfg->hist->pos = -1;
+        st->fh = 0;
+    }
     char const* entry = history_backward( st->cfg->hist, st->cfg->line, st->cur );
     if( NULL != entry )
         refill( st, entry + st->cur );
@@ -348,7 +353,8 @@ void vt100_init( struct vt100state* st, struct vt100 const* vt100, enum echo ech
         .h     = 0,
         .state = CHAR,
         .cfg   = vt100,
-        .echo  = echo
+        .echo  = echo,
+        .fh    = 1
     };
 }
 
@@ -388,13 +394,13 @@ int vt100_char( struct vt100state* st, int c ) {
                 case DEL: removechar( st );   break; // Backspace
                 case TAB: hint( st, 1 );      break; // Tab
                 case BS:  eraseword( st );    break; // Shift + backspace
-                default:                    
+                default:
                     if ( isprint( c ) )
                         addchar( st, c );
             }
             break;
         }
-        
+
         case ESCAPE: {
             if ( '[' == c ) {
                 st->state = BRACKET;
