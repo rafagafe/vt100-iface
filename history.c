@@ -48,7 +48,7 @@ void history_erase( struct history* hist ) {
 void history_line( struct history* hist, char const* line ) {
     typedef char(*array_t)[hist->cfg->numlines][hist->cfg->linelen];
     array_t const lines = (array_t)hist->cfg->lines;
-    if( 0 == strcmp( line, (*lines)[hist->pos] ) )
+    if( 0 <= hist->pos && 0 == strcmp( line, (*lines)[hist->pos] ) )
         return;
     int empty = -1 == hist->newest;
     if( empty ) {
